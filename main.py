@@ -1,12 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
+from tasks.task_handler import handle_task
 
 app = FastAPI()
 
 @app.post("/run")
 async def run_task(task: str):
-    # Placeholder for task execution logic
-    return {"status": "Task received", "task": task}
+    try:
+        result = handle_task(task)
+        return result
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/read")
 async def read_file(path: str):
