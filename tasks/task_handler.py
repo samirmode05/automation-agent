@@ -2,27 +2,27 @@ import subprocess
 from fastapi import HTTPException
 
 def handle_task(task: str):
-    if "install uv" in task and "run" in task:
-        return install_and_run_uv(task)
-    elif "format" in task and "prettier" in task:
-        return format_markdown_with_prettier(task)
+    # Example task: "Format /data/format.md using prettier@3.4.2"
+    parts = task.split(" ")
+    if len(parts) < 5:
+        raise HTTPException(status_code=400, detail="Invalid task format.")
+    
+    action = parts[0]  # Format
+    file_path = parts[1]  # /data/format.md
+    tool = parts[3]  # prettier
+    version = parts[4]  # 3.4.2
+    
+    if action.lower() == "format" and tool.lower() == "prettier":
+        # Construct the command to run
+        command = ["npx", f"prettier@{version}", "--write", file_path]
+        
+        try:
+            # Run the command and capture the output
+            result = subprocess.run(command, capture_output=True, text=True, check=True)
+            return {"status": "success", "output": result.stdout}
+        
+        except subprocess.CalledProcessError as e:
+            return {"status": "error", "output": e.stderr}
+    
     else:
-        raise HTTPException(status_code=400, detail="Task not recognized or not supported yet")
-
-def format_markdown_with_prettier(task: str):
-    file_path = "/data/format.md"
-
-    
-    try:
-        with open(file_path, "r") as file:
-            pass
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # Run Prettier
-    try:
-        subprocess.run(["prettier", "--write", file_path], check=True)
-    except subprocess.CalledProcessError as e:
-        raise HTTPException(status_code=500, detail=f"Prettier formatting failed: {str(e)}")
-    
-    return {"status": "Success", "message": f"{file_path} formatted with Prettier 3.4.2"}
+        raise HTTPException(status_code=400, detail="Unsupported task.")
