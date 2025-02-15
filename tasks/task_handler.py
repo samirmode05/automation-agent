@@ -1,28 +1,45 @@
 import subprocess
+import os
 from fastapi import HTTPException
 
+def run_datagen(email: str):
+    try:
+        # Define the command to run datagen.py with the email argument
+        script_path = os.path.join(os.getcwd(), "datagen.py")
+        result = subprocess.run(
+            ["python", script_path, email], 
+            check=True, capture_output=True, text=True
+        )
+        
+        return {"output": result.stdout}
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=f"Error running datagen: {e.stderr}")
+
 def handle_task(task: str):
-    # Example task: "Format /data/format.md using prettier@3.4.2"
-    parts = task.split(" ")
-    if len(parts) < 5:
+    if not isinstance(task, str) or not task:
         raise HTTPException(status_code=400, detail="Invalid task format.")
     
-    action = parts[0]  # Format
-    file_path = parts[1]  # /data/format.md
-    tool = parts[3]  # prettier
-    version = parts[4]  # 3.4.2
+    # Check if the task is for A1
+    if "Run datagen with" in task:
+        # Extract email from task
+        import re
+        match = re.search(r'Run datagen with "([^"]+)"', task)
+        if match:
+            email = match.group(1)
+            return run_datagen(email)
+        else:
+            raise HTTPException(status_code=400, detail="Email not found in task.")
     
-    if action.lower() == "format" and tool.lower() == "prettier":
-        # Construct the command to run
-        command = ["npx", f"prettier@{version}", "--write", file_path]
-        
+    raise HTTPException(status_code=400, detail="Unsupported task.")
+
+def execute_task(task_description):
+    print(f"Received task: {task_description}")  # Debugging line
+
+    if "wednesday" in task_description.lower() or "count" in task_description.lower():
         try:
-            # Run the command and capture the output
-            result = subprocess.run(command, capture_output=True, text=True, check=True)
-            return {"status": "success", "output": result.stdout}
-        
+            subprocess.run(["python", "tasks/count_wednesdays.py"], check=True)
+            return {"status": "success", "message": "Wednesdays counted successfully."}, 200
         except subprocess.CalledProcessError as e:
-            return {"status": "error", "output": e.stderr}
-    
+            return {"status": "error", "message": f"Failed to execute task: {str(e)}"}, 500
     else:
-        raise HTTPException(status_code=400, detail="Unsupported task.")
+        return {"status": "error", "message": "Unknown task."}, 400

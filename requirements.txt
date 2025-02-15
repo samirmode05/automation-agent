@@ -1,3 +1,6 @@
 fastapi
 uvicorn
 requests
+Faker==19.0.0
+Pillow==10.0.0
+

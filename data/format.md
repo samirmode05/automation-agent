@@ -1,2 +1,15 @@
-# Hello   World
-This is    a test  markdown   file.   
+#Unformatted Markdown
+
+This is a sample paragraph with extra spaces and trailing whitespace.
+
+- First item
+- Second item
+  +Third item
+
+
+    *    Fourth item
+
+```py
+print("24f1001198@ds.study.iitm.ac.in")
+
+```
